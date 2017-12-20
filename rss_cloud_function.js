@@ -1,96 +1,5 @@
-function listFiles(bucketName) {
-  // [START storage_list_files]
-  // Imports the Google Cloud client library
-  const Storage = require('@google-cloud/storage');
-
-  // Creates a client
-  const storage = new Storage();
-
-  /**
-   * TODO(developer): Uncomment the following line before running the sample.
-   */
-  const bucketName = 'Name of a bucket, e.g. my-bucket';
-
-  // Lists files in the bucket
-  storage
-    .bucket(bucketName)
-    .getFiles()
-    .then(results => {
-      const files = results[0];
-
-      files.forEach(file => {
-        console.log(file.name);
-      });
-    })
-    .catch(err => {
-      console.error('ERROR:', err);
-    });
-  // [END storage_list_files]
-}
-
-function listFilesByPrefix(bucketName, prefix, delimiter) {
-  // [START storage_list_files_with_prefix]
-  // Imports the Google Cloud client library
-  const Storage = require('@google-cloud/storage');
-
-  // Creates a client
-  const storage = new Storage();
-
-  /**
-   * TODO(developer): Uncomment the following lines before running the sample.
-   */
-  // const bucketName = 'Name of a bucket, e.g. my-bucket';
-  // const prefix = 'Prefix by which to filter, e.g. public/';
-  // const delimiter = 'Delimiter to use, e.g. /';
-
-  /**
-   * This can be used to list all blobs in a "folder", e.g. "public/".
-   *
-   * The delimiter argument can be used to restrict the results to only the
-   * "files" in the given "folder". Without the delimiter, the entire tree under
-   * the prefix is returned. For example, given these blobs:
-   *
-   *   /a/1.txt
-   *   /a/b/2.txt
-   *
-   * If you just specify prefix = '/a', you'll get back:
-   *
-   *   /a/1.txt
-   *   /a/b/2.txt
-   *
-   * However, if you specify prefix='/a' and delimiter='/', you'll get back:
-   *
-   *   /a/1.txt
-   */
-  const options = {
-    prefix: prefix,
-  };
-
-  if (delimiter) {
-    options.delimiter = delimiter;
-  }
-
-  // Lists files in the bucket, filtered by a prefix
-  storage
-    .bucket(bucketName)
-    .getFiles(options)
-    .then(results => {
-      const files = results[0];
-
-      console.log('Files:');
-      files.forEach(file => {
-        console.log(file.name);
-      });
-    })
-    .catch(err => {
-      console.error('ERROR:', err);
-    });
-  // [END storage_list_files_with_prefix]
-}
-
-function generate_rss(){
-
-  var RSS = require('rss');
+function generate_rss(config){
+  var RSS = require('rss')
 
   /* lets create an rss feed */
   var feed = new RSS({
@@ -132,9 +41,11 @@ function generate_rss(){
           }}
         ]}
       ]
-  });
+  })
 
-  
+  for (var i = Things.length - 1; i >= 0; i--) {
+    Things[i]
+  }
   /* loop over data and add to feed */
   feed.item({
       title:  'item title',
@@ -157,14 +68,62 @@ function generate_rss(){
         }},
         {'itunes:duration': '7:04'}
       ]
-  });
+  })
 
   // cache the xml to send to clients
-  return feed.xml();
+  return feed.xml()
 }
 
-exports.return_rss = function generate_rss(req, res) {
-  // Everything is okay.
-    console.log(req.body.message);
-    res.status(200).send('Success: ' + req.body.message);
+exports.gcs_object_trigger = function (event, callback) {
+  if (file.resourceState === 'not_exists') {
+    // ignore deletion
+  }
+  else if (!file.name.includes("rss_config.json")) {
+      //Ignore non config file changes
+  }
+  else{
+      rss_config_changed(event)
+  }
+  callback();
+}
+
+function rss_config_changed = function (event) {
+  const gcs = require('@google-cloud/storage');
+  // Creates a client
+  const storage = new gcs()
+
+  const file = event.data;
+  const filePath = file.name
+  const fileName = filePath.split('/').pop()
+  const fileBucket = file.bucket
+  const bucket = storage.bucket(fileBucket)
+  const tempFilePath = '/tmp/${fileName}'
+  const tempRssFilePath = '/tmp/podcast.xml'
+  //load config
+  //generate rss xml
+  //save xml to tempRssFilePath
+  bucket.file(filePath).download({
+    destination: tempFilePath
+  })
+  .then(() => {
+    var fs = require('fs');
+    return fs.readFile(tempFilePath, (err, data) => {
+      const config = JSON.parse(data)
+      rss_xml = generate_rss(config)
+      fs.writeFile(tempRssFilePath, rss_xml, (err) => {
+        if(err) {
+          console.log(err)
+        }
+        else{
+          console.log('Saved Updated RSS Feed')
+        }
+      })
+    })
+  })
+  .then(() => {
+    const rss_file_path = filePath.replace(/(\/)?([^\/]*)$/,"$1podcast.xml")
+    return bucket.upload(tempRssFilePath, {
+      destination: rss_file_path
+    })
+  })
 };

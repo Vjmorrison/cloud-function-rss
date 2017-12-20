@@ -1,0 +1,8 @@
+{
+  "name": "classinheritance-rss",
+  "version": "0.0.1",
+  "dependencies": {
+    "rss": "^1.2.2",
+    "@google-cloud/storage": "^1.5.1"
+  }
+}
