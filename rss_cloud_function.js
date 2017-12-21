@@ -3,72 +3,61 @@ function generate_rss(config){
 
   /* lets create an rss feed */
   var feed = new RSS({
-      title: 'title',
-      description: 'description',
-      feed_url: 'http://example.com/rss.xml',
-      site_url: 'http://example.com',
-      image_url: 'http://example.com/icon.png',
-      docs: 'http://example.com/rss/docs.html',
-      managingEditor: 'Dylan Greene',
-      webMaster: 'Dylan Greene',
-      copyright: '2013 Dylan Greene',
-      language: 'en',
-      categories: ['Category 1','Category 2','Category 3'],
-      pubDate: 'May 20, 2012 04:00:00 GMT',
-      ttl: '60',
+      title: config['title'],
+      description: config['description'],
+      feed_url: config['feed_url'],
+      site_url: config['site_url'],
+      image_url: config['image_url'],
+      docs: config['docs'],
+      managingEditor: config['managingEditor'],
+      webMaster: config['webMaster'],
+      copyright: config['copyright'],
+      language: config['language'],
+      categories: config['categories'],
+      pubDate: config['pubDate'],
+      ttl: config['ttl'],
       custom_elements: [
-        {'itunes:subtitle': 'A show about everything'},
-        {'itunes:author': 'John Doe'},
-        {'itunes:summary': 'All About Everything is a show about everything. Each week we dive into any subject known to man and talk about it as much as we can. Look for our podcast in the Podcasts app or in the iTunes Store'},
+        {'itunes:subtitle': config['itunes:subtitle']},
+        {'itunes:author': config['itunes:author']},
+        {'itunes:summary': config['itunes:summary']},
         {'itunes:owner': [
-          {'itunes:name': 'John Doe'},
-          {'itunes:email': 'john.doe@example.com'}
+          {'itunes:name': config['itunes:owner']['itunes:name']},
+          {'itunes:email': config['itunes:owner']['itunes:email']}
         ]},
-        {'itunes:email': 'john.doe@example.com'}
+        {'itunes:email': config['itunes:email']}
         {'itunes:image': {
           _attr: {
-            href: 'http://example.com/podcasts/everything/AllAboutEverything.jpg'
+            href: config['itunes:image']
           }
         }},
         {'itunes:category': [
           {_attr: {
-            text: 'Technology'
-          }},
-          {'itunes:category': {
-            _attr: {
-              text: 'Gadgets'
-            }
+            text: config['itunes:category']
           }}
         ]}
       ]
   })
+  const defaults = config['episodeConfig']
+  for (var i = config['episodeList'].length - 1; i >= 0; i--) {
+    /* loop over data and add to feed */
+    var episode = config['episodeList'][i]
+    var itemOptions = {
+      title:  episode['title'],
+      description: episode['description'],
+      url: episode['url'],
+      date: episode['date']
+    }
+    //Add in default vars where needed
+    for(key in defaults){
+      if (!(key in episode)){
+        episode[key] = defaults[key]
+      }
+      itemOptions[key] = episode[key]
+    }
 
-  for (var i = Things.length - 1; i >= 0; i--) {
-    Things[i]
+    feed.item(itemOptions)
   }
-  /* loop over data and add to feed */
-  feed.item({
-      title:  'item title',
-      description: 'use this for the content. It can include html.',
-      url: 'http://example.com/article4?this&that', // link to the item
-      guid: '1123', // optional - defaults to url
-      categories: ['Category 1','Category 2','Category 3','Category 4'], // optional - array of item categories
-      author: 'Guest Author', // optional - defaults to feed author property
-      date: 'May 27, 2012', // any format that js Date can parse.
-      lat: 33.417974, //optional latitude field for GeoRSS
-      long: -111.933231, //optional longitude field for GeoRSS
-      enclosure: {url:'...', file:'path-to-file'}, // optional enclosure
-      custom_elements: [
-        {'itunes:author': 'John Doe'},
-        {'itunes:subtitle': 'A short primer on table spices'},
-        {'itunes:image': {
-          _attr: {
-            href: 'http://example.com/podcasts/everything/AllAboutEverything/Episode1.jpg'
-          }
-        }},
-        {'itunes:duration': '7:04'}
-      ]
-  })
+  
 
   // cache the xml to send to clients
   return feed.xml()
