@@ -24,7 +24,7 @@ function generate_rss(config){
           {'itunes:name': config['itunes:owner']['itunes:name']},
           {'itunes:email': config['itunes:owner']['itunes:email']}
         ]},
-        {'itunes:email': config['itunes:email']}
+        {'itunes:email': config['itunes:email']},
         {'itunes:image': {
           _attr: {
             href: config['itunes:image']
@@ -76,7 +76,7 @@ exports.gcs_object_trigger = function (event, callback) {
   callback();
 }
 
-function rss_config_changed = function (event) {
+function rss_config_changed(event) {
   const gcs = require('@google-cloud/storage');
   // Creates a client
   const storage = new gcs()
