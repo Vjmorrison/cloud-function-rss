@@ -2,12 +2,7 @@
 
 A simple RSS feed generator for google cloud functions.
 
-## Requirements
-* Inside the GCS bucket, there should be a folder in the bucket called "episodes". Any MP3 file within that folder will be determined to be an episode.
-* Files will be sorted by the metadata label "episode-number".  This should be an integer value.
-* If no metadata is set, files will be sorted by modified timestamp and then alphabetically.
-
-## Setup
-* replace stuff
-* push stuff
-* profit
+## Functionality
+* when you upload the rss_config.json file, The cloud function will trigger and read the config.
+* It will use the config to generate an rss xml file and upload it in the same directory as the config file.
+* You can now use that rss.xml file in any podcast reader or service like Google play or iTunes.
